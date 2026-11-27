@@ -26,6 +26,13 @@ evidence you can inspect, and the steps that reach a layer can become an editabl
 - **Capture the flag (CTF).** Search decoded layers for flag patterns, review ranked hints for
   the next transformation, and copy the findings into a Markdown report.
 
+## JavaScript SDK
+
+The classic and ESM distributions expose the operation registry, recipe interpreter and analysis
+engine to browsers and Java-enabled GraalJS hosts. The SDK reference includes loading examples,
+the public contract and instructions for reproducing the compatibility report.
+[SDK reference](docs/sdk.md)
+
 ## Development
 
 For local development, clone the [source repository](https://github.com/OWASP/DecodeBox)
@@ -36,7 +43,7 @@ npm ci
 npm run dev
 ```
 
-Run `npm test -- --run` to execute the 1,205 tests. Run `npm run build` to produce the static
+Run `npm test -- --run` to execute the unit suite. Run `npm run build` to produce the static
 site and the standalone edition.
 
 ## Standalone Edition

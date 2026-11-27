@@ -23,6 +23,8 @@ coverage/
 .nyc_output/
 playwright-report/
 test-results/
+docs/sdk-compatibility.md
+tests/sdk/target/
 blob-report/
 .playwright/
 

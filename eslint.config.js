@@ -5,7 +5,19 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules'] },
+  { ignores: ['dist', 'node_modules', 'scratch', 'test-results', 'tests/sdk/target'] },
+  {
+    files: ['src/engine/runtime/*.js', 'tests/sdk/*.mjs', 'scripts/*.mjs'],
+    ...js.configs.recommended,
+    languageOptions: { globals: { ...globals.node, Java: 'readonly', runSdkTests: 'readonly', DecodeBox: 'readonly' } },
+    rules: {
+      ...js.configs.recommended.rules,
+      'no-unused-vars': ['error', {argsIgnorePattern: '^_'}],
+      'no-empty': ['error', {allowEmptyCatch: true}],
+      'no-eval': 'error',
+      'no-new-func': 'error',
+    },
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

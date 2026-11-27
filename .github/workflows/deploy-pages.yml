@@ -38,12 +38,12 @@ jobs:
   deploy:
     name: Build and publish
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     permissions:
-      # The only privilege in this workflow, and it exists for one command: the
-      # push to gh-pages at the end.
+      # Publish the static branch and read its configured Pages URL and CNAME.
       contents: write
+      pages: read
 
     steps:
       - name: Checkout
@@ -64,6 +64,10 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Check the current build before restoring files from earlier deployments.
+      - name: Verify SDK artifacts and aliases
+        run: npm run check:sdk-dist
 
       # The build ships no CNAME, so no repository claims a domain it does not
       # control. Relative asset paths support both the configured custom domain
@@ -97,6 +101,17 @@ jobs:
             echo "Keeping the custom domain $domain."
           else
             echo "No custom domain is configured, so the site stays on github.io."
+          fi
+
+      - name: Keep previously built SDK versions
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git fetch --no-tags --depth=1 origin gh-pages
+            previous=$(mktemp -d)
+            for series in $(git ls-tree --name-only FETCH_HEAD:sdk 2>/dev/null | grep -E '^v[0-9]+$' || true); do
+              git archive FETCH_HEAD "sdk/$series" | tar -x -C "$previous"
+              rsync -a --ignore-existing "$previous/sdk/" dist/sdk/
+            done
           fi
 
       - name: Verify the build is static and complete
@@ -176,6 +191,7 @@ jobs:
             case "$body" in
               *"$entry"*)
                 echo "$url is serving this build."
+                echo "SDK_BASE_URL=$url" >> "$GITHUB_ENV"
                 exit 0
                 ;;
               *src/main.tsx*)
@@ -190,3 +206,34 @@ jobs:
           done
           echo "::error::$url did not serve $entry within eight minutes. gh-pages has the build - check whether GitHub's own 'pages build and deployment' run is still queued, and re-run this job once it has finished."
           exit 1
+
+      - name: Verify published SDK bytes and load each public entry
+        env:
+          PYTHON: python3
+        run: |
+          if [ -z "$SDK_BASE_URL" ]; then
+            echo "::error::Pages did not report a verifiable site URL."
+            exit 1
+          fi
+          export JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH"
+          # Exit 1 means files are missing, redirected or differ from this build.
+          # Exit 2 means the bytes match but the JavaScript MIME check failed.
+          for attempt in $(seq 1 24); do
+            result=0
+            npm run test:endpoints || result=$?
+            if [ "$result" -eq 0 ] || [ "$result" -eq 2 ]; then
+              break
+            fi
+            if [ "$attempt" -eq 24 ]; then
+              echo "::error::Pages did not serve all SDK artifacts from this build."
+              exit 1
+            fi
+            sleep 20
+          done
+          mvn --batch-mode -f tests/sdk/pom.xml dependency:copy-dependencies
+          npm run test:sdk || result=1
+          npm run test:graaljs || result=1
+          if [ "$result" -ne 0 ]; then
+            echo "::error::Published SDK MIME or execution verification failed. See the per-URL results above."
+            exit "$result"
+          fi
