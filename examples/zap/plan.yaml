@@ -1,0 +1,17 @@
+env:
+  contexts:
+    - name: local-script
+      urls: ["http://localhost"]
+jobs:
+  - type: script
+    parameters:
+      action: add
+      type: standalone
+      engine: "ECMAScript : Graal.js"
+      name: decodebox-sdk-check
+      file: standalone.js
+  - type: script
+    parameters:
+      action: run
+      type: standalone
+      name: decodebox-sdk-check

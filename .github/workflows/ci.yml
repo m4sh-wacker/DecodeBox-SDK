@@ -55,6 +55,31 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Test SDK static files, Chromium and GraalJS
+        if: matrix.node-version == '24'
+        env:
+          PYTHON: python3
+        run: |
+          export JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH"
+          mvn --batch-mode -f tests/sdk/pom.xml dependency:copy-dependencies
+          npm run test:endpoints
+          npm run test:sdk
+          npm run test:app
+          npm run test:graaljs
+
+      - name: Exercise the SDK inside ZAP 2.17.0
+        if: matrix.node-version == '24'
+        run: |
+          work=$(mktemp -d)
+          archive="$work/ZAP_2.17.0_Linux.tar.gz"
+          curl --fail --location --retry 2 \
+            https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Linux.tar.gz -o "$archive"
+          echo "efe799aaa3627db683b43f00c9c210aea0b75c00cc8f0a0f0434d12bb3ddde5a  $archive" | sha256sum -c -
+          tar -xzf "$archive" -C "$work"
+          export JAVA="$JAVA_HOME_21_X64/bin/java"
+          export ZAP_JAR="$(find "$work" -name zap-2.17.0.jar -print -quit)"
+          npm run test:zap
+
       - name: Report bundle size
         run: |
           {
