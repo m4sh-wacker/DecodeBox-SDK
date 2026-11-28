@@ -3,6 +3,10 @@ description: Use the same pinned action and lockfile for release publication, PR
 runs:
   using: composite
   steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: '.nvmrc'
+        package-manager-cache: false
     # Dependabot maintains the action pin in the release workflow. Read its
     # lockfile at that same revision so tests and production use the same writer.
     - id: action

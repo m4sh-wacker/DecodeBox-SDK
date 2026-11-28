@@ -11,7 +11,7 @@
     "url": "https://github.com/OWASP/DecodeBox.git"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "dev": "vite",

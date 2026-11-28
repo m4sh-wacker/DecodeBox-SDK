@@ -35,8 +35,11 @@ the public contract and instructions for reproducing the compatibility report.
 
 ## Development
 
+`main` holds the application, engine, and SDK source. Development branches use `feat/` or
+`fix/` and merge through pull requests. GitHub Actions builds `gh-pages` from `main`.
+
 For local development, clone the [source repository](https://github.com/OWASP/DecodeBox)
-and run these commands from its root with Node.js **22.12.0 or later**.
+and run these commands from its root with Node.js **24 LTS**.
 
 ```sh
 npm ci

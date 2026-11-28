@@ -23,21 +23,16 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: ['22', '24']
-
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
-      - name: Use Node ${{ matrix.node-version }}
+      - name: Use project Node LTS
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: '.nvmrc'
           cache: npm
 
       - name: Install clean packages
@@ -56,19 +51,18 @@ jobs:
         run: npm run build
 
       - name: Test SDK static files, Chromium and GraalJS
-        if: matrix.node-version == '24'
         env:
           PYTHON: python3
         run: |
           export JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH"
           mvn --batch-mode -f tests/sdk/pom.xml dependency:copy-dependencies
+          npm run check:sdk-dist
           npm run test:endpoints
           npm run test:sdk
           npm run test:app
           npm run test:graaljs
 
       - name: Exercise the SDK inside ZAP 2.17.0
-        if: matrix.node-version == '24'
         run: |
           work=$(mktemp -d)
           archive="$work/ZAP_2.17.0_Linux.tar.gz"
@@ -92,7 +86,6 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload build output
-        if: matrix.node-version == '22'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dist
@@ -138,7 +131,7 @@ jobs:
       - name: Use Node LTS
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: npm
 
       - name: Install clean packages

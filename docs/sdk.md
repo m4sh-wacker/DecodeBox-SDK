@@ -51,11 +51,12 @@ nonempty and contains the bytes of its release-specific counterpart.
 
 The Pages check makes a GET request to each path and records the status, Content-Type,
 redirect location and whether the body matches the build. Each script, including `/api`,
-must return HTTP 200 with a JavaScript MIME type. The local static server serves `/api` as
-`application/octet-stream`; Chromium separately tests execution of that classic script.
-When the published bytes match, the workflow tests classic scripts and ES modules in Chromium
-and classic scripts in GraalJS. A published MIME mismatch fails verification even when a
-runtime executes the file.
+must return HTTP 200 with matching bytes. All named JavaScript files require a JavaScript
+MIME type. If `/api` returns `application/octet-stream` without a nosniff header, a second
+GET in Chromium must receive identical bytes and execute a known operation through the global
+`DecodeBox` from a separate origin. The report records the actual MIME and execution results.
+The workflow also checks classic and ES module loading in Chromium, classic URL loading in
+GraalJS and a recipe in the deployed workbench.
 
 On November 28, 2026 (Tehran time), the live `/api`, `/api.js`, `/sdk/v1/decodebox.js` and
 `/sdk/v1/decodebox.esm.js` returned HTTP 404 with `text/html; charset=utf-8` and no redirect.
